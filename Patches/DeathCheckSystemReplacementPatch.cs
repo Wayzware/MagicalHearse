@@ -15,11 +15,10 @@ public static class MagicalHearseSystemInjector
     }
 
     [HarmonyPatch(typeof(DeathCheckSystem), "OnUpdate")]
-    [HarmonyPrefix]
-    public static bool OnUpdate_Prefix(DeathCheckSystem __instance)
+    [HarmonyPostfix]
+    public static void OnUpdate_Postfix(DeathCheckSystem __instance)
     {
-        __instance.World.GetOrCreateSystemManaged<MagicalHearseSystem>().Update();
-        return true;
+        //__instance.World.GetOrCreateSystemManaged<MagicalHearseSystem>().Update();
     }
 }
 
