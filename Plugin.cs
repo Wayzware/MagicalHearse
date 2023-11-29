@@ -3,7 +3,7 @@ using Game.Prefabs;
 
 namespace Wayz.CS2.MagicalHearse;
 
-[BepInPlugin("Wayz.CS2.MagicalHearse", "Magical Hearse", "0.0.1")]
+[BepInPlugin("Wayz.CS2.MagicalHearse", "Magical Hearse", "0.0.2")]
 #pragma warning disable BepInEx002
 public class MagicalHearseMod : BaseUnityPlugin
 #pragma warning restore BepInEx002

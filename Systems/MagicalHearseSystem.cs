@@ -31,6 +31,7 @@ public class MagicalHearseSystem : GameSystemBase
             }
         });
         MagicalHearseMod.GameLogger.LogInfo("Injected MagicalHearseSystem!");
+        RequireForUpdate(_deadCitizenQuery);
     }
 
     protected override void OnUpdate()
@@ -39,7 +40,14 @@ public class MagicalHearseSystem : GameSystemBase
 
         foreach (var entity in deadCitizens)
         {
-            _commandBuffer.AddComponent<Deleted>(entity);
+            var healthProblem = EntityManager.GetComponentData<HealthProblem>(entity);
+            if((healthProblem.m_Flags & HealthProblemFlags.Dead) != 0 && (healthProblem.m_Flags & HealthProblemFlags.RequireTransport) != 0)
+            {
+                _commandBuffer.AddComponent<Deleted>(entity);
+#if DEBUG
+                MagicalHearseMod.GameLogger.LogInfo($"Deleted citizen {entity.Index}");
+#endif
+            }
         }
     }
 }
