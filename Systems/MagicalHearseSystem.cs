@@ -2,61 +2,75 @@
 using Game.Citizens;
 using Game.Common;
 using Game.Tools;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using UnityEngine;
+using Unity.Jobs;
 
-namespace Wayz.CS2.MagicalHearse;
-public class MagicalHearseSystem : GameSystemBase
+namespace MagicalHearse
 {
-    private EntityCommandBuffer _commandBuffer;
-
-    private EntityQuery _deadCitizenQuery;
-
-    protected override void OnCreate()
+    public sealed partial class MagicalHearseSystem : GameSystemBase
     {
-        base.OnCreate();
-        _commandBuffer = base.World.GetOrCreateSystemManaged<EndFrameBarrier>().CreateCommandBuffer();
+        private EntityQuery _deadCitizenQuery;
+        private EndFrameBarrier _endFrameBarrier;
+        public override int GetUpdateInterval(SystemUpdatePhase phase) => 16;
 
-        MagicalHearseMod.GameLogger.LogInfo($"Path: {Application.persistentDataPath}");
-
-        _deadCitizenQuery = GetEntityQuery(new EntityQueryDesc()
+        protected override void OnCreate()
         {
-            All =
-            [
-                ComponentType.ReadOnly<Citizen>(),
-                ComponentType.ReadOnly<HealthProblem>()
-            ],
-            None =
-            [
-                ComponentType.ReadOnly<Deleted>(),
-                ComponentType.ReadOnly<Temp>()
-            ]
-        });
-        MagicalHearseMod.GameLogger.LogInfo("Injected MagicalHearseSystem!");
-        RequireForUpdate(_deadCitizenQuery);
-    }
+            base.OnCreate();
 
-    protected override void OnUpdate()
-    {
-        var deadCitizens = _deadCitizenQuery.ToEntityArray(Allocator.Temp);
-
-        foreach (var entity in deadCitizens)
-        {
-            var healthProblem = EntityManager.GetComponentData<HealthProblem>(entity);
-            if((healthProblem.m_Flags & HealthProblemFlags.Dead) != 0 && (healthProblem.m_Flags & HealthProblemFlags.RequireTransport) != 0)
+            _deadCitizenQuery = GetEntityQuery(new EntityQueryDesc()
             {
-                try
-                {
-                    EntityManager.AddComponent<Deleted>(entity);
+                All = new[] {
+                    ComponentType.ReadOnly<Citizen>(),
+                    ComponentType.ReadOnly<HealthProblem>()
+                },
+                None = new[] {
+                    ComponentType.ReadOnly<Deleted>(),
+                    ComponentType.ReadOnly<Temp>()
                 }
-                catch
+            });
+            _endFrameBarrier = base.World.GetOrCreateSystemManaged<EndFrameBarrier>();
+
+            Mod.Log.Info("Injected MagicalHearseSystem! (Burst compiled)");
+            RequireForUpdate(_deadCitizenQuery);
+        }
+
+        protected override void OnUpdate()
+        {
+            MagicalHearseJob job = default;
+            job.m_entityTypeHandle = SystemAPI.GetEntityTypeHandle();
+            job.m_entityCommandBuffer = _endFrameBarrier.CreateCommandBuffer();
+            job.m_citizensChunks = _deadCitizenQuery.ToArchetypeChunkListAsync(World.UpdateAllocator.ToAllocator, out _);
+            job.m_healthProblemLookup = GetComponentLookup<HealthProblem>(true);
+            JobHandle handle = job.Schedule(Dependency);
+            _endFrameBarrier.AddJobHandleForProducer(handle);
+            Dependency = handle;
+        }
+
+        [BurstCompile]
+        private struct MagicalHearseJob : IJob
+        {
+            public EntityCommandBuffer m_entityCommandBuffer;
+            public NativeList<ArchetypeChunk> m_citizensChunks;
+            public EntityTypeHandle m_entityTypeHandle;
+            public ComponentLookup<HealthProblem> m_healthProblemLookup;
+
+            public void Execute()
+            {
+                for (int i = 0; i < m_citizensChunks.Length; i++)
                 {
-                    MagicalHearseMod.GameLogger.LogError($"An error occured while trying to delete a dead citizen. Entity: {entity.Index}");
+                    var citizenArray = m_citizensChunks[i].GetNativeArray(m_entityTypeHandle);
+                    for (int j = 0; j < citizenArray.Length; j++)
+                    {
+                        if (m_healthProblemLookup.TryGetComponent(citizenArray[j], out var healthProblem) &&
+                            (healthProblem.m_Flags & HealthProblemFlags.Dead) != 0 &&
+                            (healthProblem.m_Flags & HealthProblemFlags.RequireTransport) != 0)
+                        {
+                            m_entityCommandBuffer.AddComponent<Deleted>(citizenArray[j]);
+                        }
+                    }
                 }
-#if DEBUG
-                MagicalHearseMod.GameLogger.LogInfo($"Deleted citizen {entity.Index}");
-#endif
             }
         }
     }
