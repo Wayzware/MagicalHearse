@@ -25,10 +25,12 @@ public class Mod : IMod
             Log.Info($"Current mod asset at {asset.path}");
 
         m_Setting = new Setting(this);
-            m_Setting.RegisterInOptionsUI();
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
-            AssetDatabase.global.LoadSettings(nameof(MagicalHearse), m_Setting, new Setting(this));
-            Setting.Instance = m_Setting;updateSystem.UpdateAt<MagicalHearseSystem>(SystemUpdatePhase.GameSimulation);
+        m_Setting.RegisterInOptionsUI();
+        GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
+        AssetDatabase.global.LoadSettings(nameof(MagicalHearse), m_Setting, new Setting(this));
+        Setting.Instance = m_Setting;
+
+        updateSystem.UpdateAt<MagicalHearseSystem>(SystemUpdatePhase.GameSimulation);
     }
 
     public void OnDispose()

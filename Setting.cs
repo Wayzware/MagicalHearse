@@ -14,8 +14,6 @@ namespace MagicalHearse
     [FileLocation($"ModsSettings/{nameof(MagicalHearse)}/{nameof(MagicalHearse)}")]
     public class Setting : ModSetting
     {
-
-        public const string kMainSection = "Settings";
         public static Setting Instance;
 
         public Setting(IMod mod) : base(mod)
@@ -23,7 +21,7 @@ namespace MagicalHearse
 
         }
 
-        [SettingsUISection(kMainSection)] public bool EnableMagicalHearse { get; set; } = true;
+        public bool EnableMagicalHearse { get; set; } = true;
 
         public override void SetDefaults()
         {
@@ -45,9 +43,7 @@ namespace MagicalHearse
         {
             return new Dictionary<string, string>
             {
-                {m_Setting.GetSettingsLocaleID(), "Asset Packs Manager"},
-                { m_Setting.GetOptionTabLocaleID(Setting.kMainSection), "Settings" },
-
+                {m_Setting.GetSettingsLocaleID(), "Magical Hearse"},
                 {m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableMagicalHearse)), "Enable Magical Hearse"},
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableMagicalHearse)),
