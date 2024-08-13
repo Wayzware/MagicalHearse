@@ -33,6 +33,8 @@ public sealed partial class MagicalHearseSystem : GameSystemBase
 
     protected override void OnUpdate()
     {
+        if (!Setting.Instance.EnableMagicalHearse)
+            return;
         var deadCitizens = _deadCitizenQuery.ToEntityArray(Allocator.Temp);
 
         foreach (var entity in deadCitizens)
