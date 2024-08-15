@@ -23,32 +23,18 @@ This mod works with new and existing saves (may take a few seconds to kick in af
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/magical-hearse.1689354/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.1.0" />
+	<ModVersion Value="1.0.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-# 0.1.0
-*Mar 8 2024*
-
-* Initial Paradox Mods release
-
-# 0.0.3
-*Dec 25 2023*
-
-* Fixed a problem that occurred when the AbandonedBuildingRemover mod was also installed.
-
-# 0.0.2
-*Nov 28 2023*
-
-* Sick people are no longer phased out of existence (oopsie)
-* Performance improvement
+Improved performance. (Mod now uses Burst and updates less frequently)
   </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
-	<ExternalLink Type="github" Url="https://github.com/Wayzware" />
+	<ExternalLink Type="github" Url="https://github.com/Wayzware/MagicalHearse" />
   <ExternalLink Type="paypal" Url="https://www.paypal.com/paypalme/wayzware" />
 </Publish>
