@@ -25,14 +25,18 @@ This mod works with new and existing saves (may take a few seconds to kick in af
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/magical-hearse.1689354/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0.0" />
+	<ModVersion Value="1.1.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-Improved performance. (Mod now uses Burst and updates less frequently)
+* Added a toggle for the mod in the settings, so you can enable/disable the magical hearse without restarting your game.
+
+* Improved performance. (Mod now uses Burst and updates less frequently)
+
+Thanks to Konsi/Mimonsi for the settings implementation.
   </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
 	<ExternalLink Type="github" Url="https://github.com/Wayzware/MagicalHearse" />

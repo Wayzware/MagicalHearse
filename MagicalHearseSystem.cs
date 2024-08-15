@@ -13,7 +13,7 @@ namespace MagicalHearse
     {
         private EntityQuery _deadCitizenQuery;
         private EndFrameBarrier _endFrameBarrier;
-        public override int GetUpdateInterval(SystemUpdatePhase phase) => 16;
+        public override int GetUpdateInterval(SystemUpdatePhase phase) => 64;
 
         protected override void OnCreate()
         {
