@@ -3,7 +3,6 @@ using Colossal.Logging;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
-using Unity.Entities;
 
 namespace MagicalHearse
 {
@@ -35,12 +34,14 @@ namespace MagicalHearse
 
             updateSystem.UpdateAt<MagicalHearseSystem>(SystemUpdatePhase.GameSimulation);
 
-            World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<MagicalHearseSystem>().Enabled = m_Setting.EnableMagicalHearse;
+            updateSystem.World.GetOrCreateSystemManaged<MagicalHearseSystem>().Enabled = m_Setting.EnableMagicalHearse;
         }
 
         public void OnDispose()
         {
             Log.Info(nameof(OnDispose));
+            m_Setting?.UnregisterInOptionsUI();
+            m_Setting = null;
         }
     }
 }
