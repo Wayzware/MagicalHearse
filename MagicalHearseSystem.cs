@@ -3,6 +3,7 @@ using Game.Citizens;
 using Game.Common;
 using Game.Tools;
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -19,18 +20,11 @@ namespace MagicalHearse
         {
             base.OnCreate();
 
-            _deadCitizenQuery = GetEntityQuery(new EntityQueryDesc()
-            {
-                All = new[] {
-                    ComponentType.ReadOnly<Citizen>(),
-                    ComponentType.ReadOnly<HealthProblem>()
-                },
-                None = new[] {
-                    ComponentType.ReadOnly<Deleted>(),
-                    ComponentType.ReadOnly<Temp>()
-                }
-            });
-            _endFrameBarrier = base.World.GetOrCreateSystemManaged<EndFrameBarrier>();
+            _deadCitizenQuery = SystemAPI.QueryBuilder()
+                .WithAll<Citizen, HealthProblem>()
+                .WithNone<Deleted, Temp>()
+                .Build();
+            _endFrameBarrier = World.GetOrCreateSystemManaged<EndFrameBarrier>();
 
             Mod.Log.Info("Injected MagicalHearseSystem! (Burst compiled)");
             RequireForUpdate(_deadCitizenQuery);
@@ -38,37 +32,32 @@ namespace MagicalHearse
 
         protected override void OnUpdate()
         {
-            MagicalHearseJob job = default;
-            job.m_entityTypeHandle = SystemAPI.GetEntityTypeHandle();
-            job.m_entityCommandBuffer = _endFrameBarrier.CreateCommandBuffer();
-            job.m_citizensChunks = _deadCitizenQuery.ToArchetypeChunkListAsync(World.UpdateAllocator.ToAllocator, out _);
-            job.m_healthProblemLookup = GetComponentLookup<HealthProblem>(true);
-            JobHandle handle = job.Schedule(Dependency);
+            JobHandle handle = new MagicalHearseJob()
+            {
+                m_entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
+                m_healthProblemType = SystemAPI.GetComponentTypeHandle<HealthProblem>(true),
+                m_entityCommandBuffer = _endFrameBarrier.CreateCommandBuffer().AsParallelWriter(),
+            }.ScheduleParallel(_deadCitizenQuery, Dependency);
             _endFrameBarrier.AddJobHandleForProducer(handle);
             Dependency = handle;
         }
 
         [BurstCompile]
-        private struct MagicalHearseJob : IJob
+        private struct MagicalHearseJob : IJobChunk
         {
-            public EntityCommandBuffer m_entityCommandBuffer;
-            public NativeList<ArchetypeChunk> m_citizensChunks;
-            public EntityTypeHandle m_entityTypeHandle;
-            public ComponentLookup<HealthProblem> m_healthProblemLookup;
+            [ReadOnly] public EntityTypeHandle m_entityTypeHandle;
+            [ReadOnly] public ComponentTypeHandle<HealthProblem> m_healthProblemType;
+            public EntityCommandBuffer.ParallelWriter m_entityCommandBuffer;
 
-            public void Execute()
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                for (int i = 0; i < m_citizensChunks.Length; i++)
+                NativeArray<Entity> citizenArray = chunk.GetNativeArray(m_entityTypeHandle);
+                NativeArray<HealthProblem> healthProblems = chunk.GetNativeArray(ref m_healthProblemType);
+                for (int index = 0; index < citizenArray.Length; index++)
                 {
-                    var citizenArray = m_citizensChunks[i].GetNativeArray(m_entityTypeHandle);
-                    for (int j = 0; j < citizenArray.Length; j++)
+                    if ((healthProblems[index].m_Flags & (HealthProblemFlags.Dead | HealthProblemFlags.RequireTransport)) == (HealthProblemFlags.Dead | HealthProblemFlags.RequireTransport))
                     {
-                        if (m_healthProblemLookup.TryGetComponent(citizenArray[j], out var healthProblem) &&
-                            (healthProblem.m_Flags & HealthProblemFlags.Dead) != 0 &&
-                            (healthProblem.m_Flags & HealthProblemFlags.RequireTransport) != 0)
-                        {
-                            m_entityCommandBuffer.AddComponent<Deleted>(citizenArray[j]);
-                        }
+                        m_entityCommandBuffer.AddComponent<Deleted>(unfilteredChunkIndex, citizenArray[index]);
                     }
                 }
             }
